@@ -1,83 +1,17 @@
-// Orders Page Component
 let userOrders = [];
 
-async function loadOrders() {
-    if (!window.currentUser || !window.currentUser.token) {
-        userOrders = [];
-        renderOrdersList();
-        return;
-    }
-    
-    const result = await API.orders.getMyOrders(window.currentUser.token);
-    if (result.success) {
-        userOrders = result.orders || [];
-    } else {
-        // Mock orders for demo
-        userOrders = [
-            { orderId: 'ORD12345', restaurantId: { name: 'Biryani House' }, totalAmount: 460, status: 'delivered', createdAt: new Date() },
-            { orderId: 'ORD12346', restaurantId: { name: 'Pizza Paradise' }, totalAmount: 520, status: 'preparing', createdAt: new Date() }
-        ];
-    }
-    renderOrdersList();
-}
-
-function renderOrdersList() {
+function loadOrders() {
+    userOrders = JSON.parse(localStorage.getItem('orders') || '[]');
     const container = document.getElementById('ordersList');
     if (!container) return;
-    
-    if (userOrders.length === 0) {
-        container.innerHTML = `
-            <div class="hero">
-                <h3>No Orders Yet</h3>
-                <p>Start exploring restaurants and place your first order!</p>
-                <button class="btn-primary" onclick="window.navigateTo('restaurants')" style="width: auto;">Browse Restaurants</button>
-            </div>
-        `;
-        return;
-    }
-    
+    if (userOrders.length === 0) { container.innerHTML = `<div style="text-align:center;padding:4rem"><i class="fas fa-shopping-bag" style="font-size:4rem"></i><h2>No Orders Yet</h2><button class="btn-primary" onclick="window.navigateTo('restaurants')">Browse Restaurants</button></div>`; return; }
     container.innerHTML = userOrders.map(order => `
-        <div class="restaurant-card" style="margin-bottom: 1rem;">
-            <div class="restaurant-info">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div class="restaurant-name">${order.restaurantId?.name || 'Restaurant'}</div>
-                    <div class="rating" style="color: ${order.status === 'delivered' ? 'var(--success)' : 'var(--warning)'}">
-                        ${order.status === 'delivered' ? '✅ Delivered' : 
-                          order.status === 'cancelled' ? '❌ Cancelled' :
-                          '🔄 In Progress'}
-                    </div>
-                </div>
-                <div class="restaurant-meta">
-                    <div>Order ID: ${order.orderId}</div>
-                    <div>Date: ${new Date(order.createdAt).toLocaleDateString()}</div>
-                    <div>Total: ₹${order.totalAmount}</div>
-                </div>
-                <button class="btn-delivery" onclick="window.viewOrder('${order.orderId}')" style="margin-top: 1rem;">
-                    ${order.status === 'delivered' ? 'Leave a Review' : 'Track Order'}
-                </button>
-            </div>
-        </div>
-    `).join('');
+        <div style="background:rgba(255,255,255,0.05);border-radius:16px;padding:1.5rem;margin-bottom:1rem"><div style="display:flex;justify-content:space-between"><h3>Order #${order.id}</h3><span style="background:${order.status === 'delivered' ? '#2E7D32' : '#F57C00'};padding:0.25rem 0.75rem;border-radius:20px">${order.status === 'delivered' ? '✅ Delivered' : '🔄 In Progress'}</span></div>
+        <div><i class="fas fa-store"></i> ${order.restaurantName}</div><div><i class="fas fa-calendar"></i> ${formatDate(order.date)}</div><div><strong>Total: ${formatPrice(order.total ? order.total + 40 : 0)}</strong></div>
+        ${order.status === 'delivered' ? `<button class="btn-primary" style="margin-top:1rem;background:var(--secondary)" onclick="window.openReviewModalForOrder(${JSON.stringify(order).replace(/"/g, '&quot;')})"><i class="fas fa-star"></i> Leave Review</button>` : ''}
+        </div>`).join('');
 }
 
-function viewOrder(orderId) {
-    const order = userOrders.find(o => o.orderId === orderId);
-    if (order && order.status === 'delivered') {
-        openReviewModal(order);
-    } else {
-        showNotification(`Tracking order ${orderId}. Real-time updates coming!`);
-    }
-}
+function openReviewModalForOrder(order) { openReviewModal(order); }
 
-function OrdersPage() {
-    setTimeout(() => loadOrders(), 100);
-    
-    return `
-        <div class="dashboard">
-            <h2>My Orders</h2>
-            <div id="ordersList" style="margin-top: 2rem;">
-                <div class="loading">Loading orders...</div>
-            </div>
-        </div>
-    `;
-}
+function OrdersPage() { setTimeout(() => loadOrders(), 100); return `<h1><i class="fas fa-shopping-bag"></i> My Orders</h1><div id="ordersList"><div class="loading">Loading...</div></div>`; }

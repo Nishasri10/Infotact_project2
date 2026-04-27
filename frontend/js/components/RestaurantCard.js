@@ -1,30 +1,18 @@
-// Restaurant Card Component
-function RestaurantCard(restaurant, onDelivery, onReserve) {
-    const isOpen = restaurant.isOpen !== false;
-    
+function RestaurantCard(restaurant, isFavorite, onAddToCart, onViewDetails, onToggleFavorite) {
     return `
         <div class="restaurant-card">
-            <div class="restaurant-image" style="background-image: url('${restaurant.image || 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500'}')">
-                <div class="restaurant-status" style="background: ${isOpen ? 'var(--success)' : 'var(--warning)'}">
-                    ${isOpen ? 'Open Now' : 'Closed'}
-                </div>
+            <div class="restaurant-image" style="background-image: url('${restaurant.image}')">
+                <div class="restaurant-status" style="background: ${restaurant.isOpen ? '#2E7D32' : '#F57C00'}">${restaurant.isOpen ? 'Open Now' : 'Closed'}</div>
+                <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="event.stopPropagation(); onToggleFavorite(${restaurant.id})"><i class="fas fa-heart"></i></button>
+                <div class="distance-badge"><i class="fas fa-location-dot"></i> ${restaurant.distance} km</div>
             </div>
             <div class="restaurant-info">
                 <div class="restaurant-name">${restaurant.name}</div>
-                <div class="restaurant-cuisine">${Array.isArray(restaurant.cuisine) ? restaurant.cuisine.join(' • ') : restaurant.cuisine}</div>
-                <div class="restaurant-meta">
-                    <div class="rating">⭐ ${restaurant.rating || 4.5}</div>
-                    <div>📍 ${restaurant.distance ? restaurant.distance.toFixed(1) : '1.5'} km</div>
-                    <div>⏱️ ${restaurant.deliveryTime || '25-35 min'}</div>
-                </div>
-                <div>💰 ₹${restaurant.priceForTwo || 600} for two</div>
+                <div class="restaurant-cuisine">${restaurant.cuisine.join(' • ')}</div>
+                <div class="restaurant-meta"><div class="rating">⭐ ${restaurant.rating}</div><div>⏱️ ${restaurant.deliveryTime}</div><div>💰 ₹${restaurant.priceForTwo}</div></div>
                 <div class="restaurant-actions">
-                    <button class="btn-delivery" onclick="(${onDelivery})(JSON.parse('${JSON.stringify(restaurant).replace(/'/g, "\\'")}'))">
-                        🛵 Delivery
-                    </button>
-                    <button class="btn-reserve" onclick="(${onReserve})(JSON.parse('${JSON.stringify(restaurant).replace(/'/g, "\\'")}'))">
-                        🍽️ Reserve Table
-                    </button>
+                    <button class="btn-delivery" onclick="onAddToCart(${JSON.stringify(restaurant).replace(/"/g, '&quot;')})"><i class="fas fa-motorcycle"></i> Delivery</button>
+                    <button class="btn-view" onclick="onViewDetails(${restaurant.id})"><i class="fas fa-eye"></i> View Details</button>
                 </div>
             </div>
         </div>

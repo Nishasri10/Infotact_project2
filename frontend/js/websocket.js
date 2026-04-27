@@ -6,12 +6,11 @@ const maxReconnectAttempts = 5;
 const WebSocketService = {
     connect: () => {
         try {
-            socket = new WebSocket('ws://localhost:5000');
+            socket = new WebSocket(CONFIG.WS_URL);
             
             socket.onopen = () => {
                 console.log('🔌 WebSocket connected');
                 reconnectAttempts = 0;
-                if (window.onWebSocketConnect) window.onWebSocketConnect();
             };
             
             socket.onmessage = (event) => {
@@ -56,8 +55,6 @@ const WebSocketService = {
     },
     
     disconnect: () => {
-        if (socket) {
-            socket.close();
-        }
+        if (socket) socket.close();
     }
 };
