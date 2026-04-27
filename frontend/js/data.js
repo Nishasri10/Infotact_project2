@@ -1,3 +1,138 @@
+// ============ FOOD ITEMS DATA - 10 ITEMS ============
+const foodItems = [
+    { 
+        id: 1, 
+        name: "Butter Chicken Biryani", 
+        description: "Authentic Hyderabadi biryani with tender chicken pieces, aromatic basmati rice, and secret spices. Served with raita and salan.", 
+        price: 350, 
+        rating: 4.8, 
+        category: "Main Course", 
+        isVeg: false, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500", 
+        restaurant: "Biryani House", 
+        deliveryTime: "25-35 min" 
+    },
+    { 
+        id: 2, 
+        name: "Margherita Pizza", 
+        description: "Wood-fired pizza with fresh mozzarella, basil leaves, and premium tomato sauce. Classic Italian taste!", 
+        price: 399, 
+        rating: 4.7, 
+        category: "Pizza", 
+        isVeg: true, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=500", 
+        restaurant: "Pizza Paradise", 
+        deliveryTime: "30-40 min" 
+    },
+    { 
+        id: 3, 
+        name: "California Sushi Roll", 
+        description: "Fresh crab meat, ripe avocado, cucumber, and sushi rice wrapped in nori. Served with wasabi and ginger.", 
+        price: 450, 
+        rating: 4.9, 
+        category: "Sushi", 
+        isVeg: false, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=500", 
+        restaurant: "Sushi Master", 
+        deliveryTime: "20-30 min" 
+    },
+    { 
+        id: 4, 
+        name: "Masala Dosa", 
+        description: "Crispy rice crepe filled with spiced potato masala, served with coconut chutney and sambar.", 
+        price: 120, 
+        rating: 4.6, 
+        category: "South Indian", 
+        isVeg: true, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=500", 
+        restaurant: "Spice Garden", 
+        deliveryTime: "15-20 min" 
+    },
+    { 
+        id: 5, 
+        name: "Pepperoni Pizza", 
+        description: "Spicy pepperoni slices with mozzarella cheese on our signature tomato sauce. Extra cheese available!", 
+        price: 499, 
+        rating: 4.8, 
+        category: "Pizza", 
+        isVeg: false, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1628840042765-356cda07504e?w=500", 
+        restaurant: "Pizza Paradise", 
+        deliveryTime: "30-40 min" 
+    },
+    { 
+        id: 6, 
+        name: "Chicken Tikka", 
+        description: "Grilled chicken tikka marinated in yogurt and spices, served with mint chutney and onions.", 
+        price: 280, 
+        rating: 4.7, 
+        category: "Starters", 
+        isVeg: false, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=500", 
+        restaurant: "Biryani House", 
+        deliveryTime: "20-25 min" 
+    },
+    { 
+        id: 7, 
+        name: "Dragon Roll Sushi", 
+        description: "Eel, cucumber, and avocado topped with sliced avocado and eel sauce. A customer favorite!", 
+        price: 650, 
+        rating: 4.9, 
+        category: "Sushi", 
+        isVeg: false, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1617196034183-421b4917c92d?w=500", 
+        restaurant: "Sushi Master", 
+        deliveryTime: "25-30 min" 
+    },
+    { 
+        id: 8, 
+        name: "Paneer Butter Masala", 
+        description: "Creamy cottage cheese cubes in rich tomato and cashew gravy. Perfect with naan or rice.", 
+        price: 220, 
+        rating: 4.5, 
+        category: "Main Course", 
+        isVeg: true, 
+        popular: false, 
+        image: "https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=500", 
+        restaurant: "Spice Garden", 
+        deliveryTime: "20-25 min" 
+    },
+    { 
+        id: 9, 
+        name: "Garlic Bread", 
+        description: "Crispy garlic bread with herb butter and mozzarella cheese. Served with marinara sauce.", 
+        price: 120, 
+        rating: 4.4, 
+        category: "Sides", 
+        isVeg: true, 
+        popular: false, 
+        image: "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=500", 
+        restaurant: "Pizza Paradise", 
+        deliveryTime: "10-15 min" 
+    },
+    { 
+        id: 10, 
+        name: "Gulab Jamun", 
+        description: "Soft, spongy milk dumplings soaked in cardamom-scented sugar syrup. Served warm.", 
+        price: 80, 
+        rating: 4.6, 
+        category: "Dessert", 
+        isVeg: true, 
+        popular: true, 
+        image: "https://images.unsplash.com/photo-1602524813498-05f7c3d15e6c?w=500", 
+        restaurant: "Biryani House", 
+        deliveryTime: "10-15 min" 
+    }
+];
+
+// ============ EVENTS DATA - 10 UPCOMING + 5 PAST ============
 const eventsData = [
     // ============ UPCOMING EVENTS (2026 - 2027) ============
     {
@@ -302,3 +437,9 @@ function getPastEvents() {
     today.setHours(0, 0, 0, 0);
     return eventsData.filter(event => new Date(event.date) < today);
 }
+
+// Log to confirm data is loaded
+console.log("✅ Data loaded successfully!");
+console.log(`📦 Food Items: ${foodItems.length} items`);
+console.log(`🎟️ Upcoming Events: ${getUpcomingEvents().length}`);
+console.log(`📅 Past Events: ${getPastEvents().length}`);
