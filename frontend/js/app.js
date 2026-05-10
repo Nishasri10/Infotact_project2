@@ -11,15 +11,16 @@ function renderNavbar() {
             <button class="menu-toggle" onclick="document.getElementById('navMenu').classList.toggle('active')">
                 <i class="fas fa-bars"></i>
             </button>
-            <div class="nav-menu" id="navMenu">
-                <button class="nav-link" onclick="navigateTo('home')"><i class="fas fa-home"></i> Home</button>
-                <button class="nav-link" onclick="navigateTo('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
-                <button class="nav-link" onclick="navigateTo('wishlist')"><i class="fas fa-heart"></i> Wishlist</button>
-                <button class="nav-link" onclick="navigateTo('reservations')"><i class="fas fa-calendar"></i> Reservations</button>
-                <button class="nav-link" onclick="navigateTo('events')"><i class="fas fa-ticket-alt"></i> Events</button>
-                <button class="nav-link" onclick="navigateTo('cart')"><i class="fas fa-shopping-cart"></i> Cart</button>
-                <button class="nav-link" onclick="navigateTo('profile')"><i class="fas fa-user"></i> Profile</button>
-            </div>
+          <div class="nav-menu" id="navMenu">
+    <button class="nav-link" onclick="navigateTo('home')"><i class="fas fa-home"></i> Home</button>
+    <button class="nav-link" onclick="navigateTo('dashboard')"><i class="fas fa-chart-line"></i> Dashboard</button>
+    <button class="nav-link" onclick="navigateTo('orders')"><i class="fas fa-shopping-bag"></i> Orders</button>
+    <button class="nav-link" onclick="navigateTo('tracking')"><i class="fas fa-map-marked-alt"></i> Track Orders</button>  <!-- Add this -->
+    <button class="nav-link" onclick="navigateTo('wishlist')"><i class="fas fa-heart"></i> Wishlist</button>
+    <button class="nav-link" onclick="navigateTo('reservations')"><i class="fas fa-calendar"></i> Reservations</button>
+    <button class="nav-link" onclick="navigateTo('events')"><i class="fas fa-ticket-alt"></i> Events</button>
+    <button class="nav-link" onclick="navigateTo('cart')"><i class="fas fa-shopping-cart"></i> Cart</button>
+</div>
             <div class="nav-actions">
                 <button class="cart-btn" onclick="toggleCart()">
                     <i class="fas fa-shopping-cart"></i>
@@ -31,9 +32,9 @@ function renderNavbar() {
         </div>
     `;
 }
-
 function navigateTo(page) {
     currentPage = page;
+    
     // Update active state on nav links
     document.querySelectorAll('.nav-link').forEach(link => {
         link.classList.remove('active');
@@ -50,6 +51,8 @@ function navigateTo(page) {
     else if (page === 'events') renderEventsPage();
     else if (page === 'cart') renderCartPage();
     else if (page === 'profile') renderProfilePage();
+    else if (page === 'orders') renderOrdersPage();
+    else if (page === 'tracking') renderOrderTrackingPage();  // Add this
     
     // Close mobile menu if open
     const navMenu = document.getElementById('navMenu');
@@ -59,7 +62,6 @@ function navigateTo(page) {
     const cartSidebar = document.getElementById('cartSidebar');
     if (cartSidebar) cartSidebar.classList.remove('open');
 }
-
 function renderApp() {
     const app = document.getElementById('app');
     app.innerHTML = `
