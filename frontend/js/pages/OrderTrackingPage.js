@@ -1,14 +1,38 @@
-// Order Tracking Page - Complete with Live Location
+// Order Tracking Page - Complete with Real World Map
 let trackingInterval = null;
 let currentTrackingOrder = null;
 let map = null;
 let deliveryMarker = null;
 let restaurantMarker = null;
 let userMarker = null;
+let routeLayer = null;
+
+// Real coordinates for Delhi locations
+const locationCoordinates = {
+    // Restaurant locations
+    restaurants: {
+        "Biryani House": { lat: 28.6139, lng: 77.2090, name: "Biryani House" },
+        "Pizza Paradise": { lat: 28.6200, lng: 77.2150, name: "Pizza Paradise" },
+        "Sushi Master": { lat: 28.6000, lng: 77.2000, name: "Sushi Master" },
+        "Spice Garden": { lat: 28.6100, lng: 77.2050, name: "Spice Garden" },
+        "Dragon Wok": { lat: 28.6300, lng: 77.2200, name: "Dragon Wok" },
+        "Cafe Arabia": { lat: 28.6050, lng: 77.2100, name: "Cafe Arabia" }
+    },
+    // Default delivery areas (user locations)
+    deliveryAreas: {
+        "Connaught Place": { lat: 28.6300, lng: 77.2200, name: "Connaught Place" },
+        "Saket": { lat: 28.5250, lng: 77.2100, name: "Saket" },
+        "Hauz Khas": { lat: 28.5490, lng: 77.2000, name: "Hauz Khas" },
+        "Koramangala": { lat: 12.9279, lng: 77.6271, name: "Koramangala" },
+        "Indiranagar": { lat: 12.9784, lng: 77.6408, name: "Indiranagar" },
+        "MG Road": { lat: 12.9752, lng: 77.6073, name: "MG Road" },
+        "default": { lat: 28.6400, lng: 77.2250, name: "Delivery Location" }
+    }
+};
 
 function renderOrderTrackingPage() {
     const container = document.getElementById('pageContent');
-    const recentOrders = orders.slice(0, 10); // Get recent orders
+    const recentOrders = orders.slice(0, 10);
     
     if (orders.length === 0) {
         container.innerHTML = `
@@ -27,17 +51,16 @@ function renderOrderTrackingPage() {
     container.innerHTML = `
         <div class="dashboard-header" style="background: linear-gradient(135deg, rgba(255,71,87,0.15), rgba(255,165,2,0.08)); border-radius: 20px; padding: 1.5rem; margin-bottom: 2rem;">
             <div>
-                <h1><i class="fas fa-truck" style="color: var(--primary);"></i> Track Your Orders</h1>
-                <p style="color: var(--text-muted); margin-top: 0.5rem;">Real-time order tracking and delivery status</p>
+                <h1><i class="fas fa-map-marked-alt" style="color: var(--primary);"></i> Track Your Orders</h1>
+                <p style="color: var(--text-muted); margin-top: 0.5rem;">Real-time order tracking with live GPS location</p>
             </div>
         </div>
         
-        <!-- Order List Section -->
         <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem;">
             <!-- Left Panel - Order List -->
             <div>
                 <h3><i class="fas fa-list"></i> Your Orders</h3>
-                <div class="dashboard-container" style="margin-top: 1rem; max-height: 600px; overflow-y: auto;">
+                <div class="dashboard-container" style="margin-top: 1rem; max-height: 500px; overflow-y: auto;">
                     ${orders.map((order, index) => `
                         <div class="order-tracking-item" onclick="selectOrderToTrack('${order.id}')" 
                              style="padding: 1rem; border-bottom: 1px solid var(--border); cursor: pointer; transition: all 0.3s; ${currentTrackingOrder?.id === order.id ? 'background: rgba(255,71,87,0.1); border-left: 3px solid var(--primary);' : ''}"
@@ -67,12 +90,9 @@ function renderOrderTrackingPage() {
             <!-- Right Panel - Tracking Map & Details -->
             <div>
                 <div class="dashboard-container">
-                    <h3><i class="fas fa-map-marked-alt"></i> Live Tracking</h3>
-                    <div id="trackingMap" style="height: 350px; border-radius: 12px; margin: 1rem 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-                        <div style="text-align: center;">
-                            <i class="fas fa-map" style="font-size: 3rem; color: var(--gray);"></i>
-                            <p style="margin-top: 0.5rem;">Select an order to start tracking</p>
-                        </div>
+                    <h3><i class="fas fa-map-marked-alt"></i> Live GPS Tracking</h3>
+                    <div id="trackingMap" style="height: 400px; border-radius: 12px; margin: 1rem 0; background: #e8eaf6; overflow: hidden;">
+                        <div id="map" style="height: 100%; width: 100%;"></div>
                     </div>
                     
                     <!-- Order Details -->
@@ -85,10 +105,9 @@ function renderOrderTrackingPage() {
                     
                     <!-- Order Progress Steps -->
                     <div id="orderProgress" style="margin-top: 1rem; display: none;">
-                        <div class="tracking-steps-container" style="display: flex; justify-content: space-between; position: relative;">
-                            <div class="progress-line" style="position: absolute; top: 20px; left: 0; right: 0; height: 2px; background: rgba(255,255,255,0.1); z-index: 0;"></div>
+                        <div style="display: flex; justify-content: space-between; position: relative;">
                             ${['Order Placed', 'Preparing', 'On the Way', 'Delivered'].map((step, idx) => `
-                                <div class="tracking-step" style="text-align: center; flex: 1; position: relative; z-index: 1;" id="step-${idx}">
+                                <div class="tracking-step" style="text-align: center; flex: 1;" id="step-${idx}">
                                     <div style="width: 40px; height: 40px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto; transition: all 0.3s;">
                                         <i class="fas ${idx === 0 ? 'fa-receipt' : idx === 1 ? 'fa-utensils' : idx === 2 ? 'fa-truck' : 'fa-home'}"></i>
                                     </div>
@@ -101,32 +120,199 @@ function renderOrderTrackingPage() {
             </div>
         </div>
     `;
+    
+    // Load Leaflet CSS and JS dynamically
+    if (!document.querySelector('#leaflet-css')) {
+        const link = document.createElement('link');
+        link.id = 'leaflet-css';
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+        
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.onload = () => {
+            if (currentTrackingOrder) {
+                initRealMap(currentTrackingOrder);
+            }
+        };
+        document.head.appendChild(script);
+    } else if (currentTrackingOrder) {
+        initRealMap(currentTrackingOrder);
+    }
 }
 
-// Helper function to get status color
-function getStatusColor(status) {
-    const colors = {
-        'pending': '#F57C00',
-        'confirmed': '#2196F3',
-        'preparing': '#FF9800',
-        'out_for_delivery': '#9C27B0',
-        'delivered': '#4CAF50',
-        'cancelled': '#F44336'
+// Initialize real map with Leaflet
+function initRealMap(order) {
+    if (map) {
+        map.remove();
+        map = null;
+    }
+    
+    // Get restaurant coordinates
+    const restaurantName = order.items?.[0]?.restaurant || order.restaurantName || 'Biryani House';
+    const restaurantLoc = locationCoordinates.restaurants[restaurantName] || locationCoordinates.restaurants['Biryani House'];
+    
+    // Get delivery coordinates (based on address or default)
+    let deliveryLoc = locationCoordinates.deliveryAreas['Connaught Place'];
+    if (order.address) {
+        for (const [area, coords] of Object.entries(locationCoordinates.deliveryAreas)) {
+            if (order.address.toLowerCase().includes(area.toLowerCase())) {
+                deliveryLoc = coords;
+                break;
+            }
+        }
+    }
+    
+    // Center map between restaurant and delivery location
+    const centerLat = (restaurantLoc.lat + deliveryLoc.lat) / 2;
+    const centerLng = (restaurantLoc.lng + deliveryLoc.lng) / 2;
+    
+    // Initialize map
+    map = L.map('map').setView([centerLat, centerLng], 13);
+    
+    // Add tile layer (OpenStreetMap)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        subdomains: 'abcd',
+        maxZoom: 19,
+        minZoom: 3
+    }).addTo(map);
+    
+    // Add restaurant marker
+    const restaurantIcon = L.divIcon({
+        html: '<div style="background: #FF4757; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fas fa-store" style="color: white; font-size: 18px;"></i></div>',
+        className: 'custom-div-icon',
+        iconSize: [40, 40],
+        popupAnchor: [0, -20]
+    });
+    
+    restaurantMarker = L.marker([restaurantLoc.lat, restaurantLoc.lng], { icon: restaurantIcon })
+        .addTo(map)
+        .bindPopup(`
+            <b>🍽️ ${restaurantLoc.name}</b><br>
+            <small>Restaurant</small>
+        `)
+        .openPopup();
+    
+    // Add delivery location marker (user)
+    const userIcon = L.divIcon({
+        html: '<div style="background: #2ED573; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"><i class="fas fa-home" style="color: white; font-size: 18px;"></i></div>',
+        className: 'custom-div-icon',
+        iconSize: [40, 40],
+        popupAnchor: [0, -20]
+    });
+    
+    userMarker = L.marker([deliveryLoc.lat, deliveryLoc.lng], { icon: userIcon })
+        .addTo(map)
+        .bindPopup(`
+            <b>🏠 Your Location</b><br>
+            <small>${order.address || deliveryLoc.name}</small>
+        `);
+    
+    // Add delivery marker (moving vehicle)
+    const deliveryIcon = L.divIcon({
+        html: '<div style="background: #FFA502; width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: 2px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3); animation: pulse 1.5s infinite;"><i class="fas fa-motorcycle" style="color: white; font-size: 16px;"></i></div>',
+        className: 'custom-div-icon',
+        iconSize: [35, 35],
+        popupAnchor: [0, -18]
+    });
+    
+    // Initial delivery position (near restaurant)
+    const initialDeliveryPos = { lat: restaurantLoc.lat + 0.002, lng: restaurantLoc.lng + 0.002 };
+    deliveryMarker = L.marker([initialDeliveryPos.lat, initialDeliveryPos.lng], { icon: deliveryIcon })
+        .addTo(map)
+        .bindPopup('<b>🚚 Delivery Partner</b><br>On the way to you!');
+    
+    // Draw route between restaurant and delivery location
+    const routePoints = [
+        [restaurantLoc.lat, restaurantLoc.lng],
+        [deliveryLoc.lat, deliveryLoc.lng]
+    ];
+    
+    routeLayer = L.polyline(routePoints, {
+        color: '#FFA502',
+        weight: 4,
+        opacity: 0.7,
+        dashArray: '10, 10'
+    }).addTo(map);
+    
+    // Add distance label
+    const distance = calculateDistance(restaurantLoc.lat, restaurantLoc.lng, deliveryLoc.lat, deliveryLoc.lng);
+    const midPoint = [(restaurantLoc.lat + deliveryLoc.lat) / 2, (restaurantLoc.lng + deliveryLoc.lng) / 2];
+    
+    L.marker(midPoint, {
+        icon: L.divIcon({
+            html: `<div style="background: rgba(0,0,0,0.7); padding: 2px 8px; border-radius: 20px; font-size: 11px; color: white;">${distance.toFixed(1)} km • ~${Math.ceil(distance * 3)} min</div>`,
+            className: 'distance-label'
+        })
+    }).addTo(map);
+    
+    // Store tracking data
+    currentTrackingOrder = {
+        ...order,
+        restaurantLoc: restaurantLoc,
+        deliveryLoc: deliveryLoc,
+        currentProgress: 0,
+        distance: distance
     };
-    return colors[status?.toLowerCase()] || '#757575';
 }
 
-// Helper function to get status icon
-function getStatusIcon(status) {
-    const icons = {
-        'pending': '⏳',
-        'confirmed': '✓',
-        'preparing': '🍳',
-        'out_for_delivery': '🚚',
-        'delivered': '✅',
-        'cancelled': '❌'
-    };
-    return icons[status?.toLowerCase()] || '📦';
+// Calculate distance between two coordinates (Haversine formula)
+function calculateDistance(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLng/2) * Math.sin(dLng/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+// Update delivery marker position based on progress
+function updateDeliveryPosition(progress) {
+    if (!currentTrackingOrder || !deliveryMarker || !map) return;
+    
+    const start = currentTrackingOrder.restaurantLoc;
+    const end = currentTrackingOrder.deliveryLoc;
+    
+    const lat = start.lat + (end.lat - start.lat) * (progress / 100);
+    const lng = start.lng + (end.lng - start.lng) * (progress / 100);
+    
+    deliveryMarker.setLatLng([lat, lng]);
+    
+    // Center map on delivery marker when progress > 20%
+    if (progress > 20 && progress < 95) {
+        map.setView([lat, lng], 14);
+    }
+    
+    // Update popup with ETA
+    const remainingDistance = currentTrackingOrder.distance * (1 - progress / 100);
+    const etaMinutes = Math.ceil(remainingDistance * 3);
+    deliveryMarker.bindPopup(`<b>🚚 Delivery Partner</b><br>📍 ${progress.toFixed(0)}% complete<br>⏱️ ~${etaMinutes} min away`);
+    
+    // Update route line style based on progress
+    if (routeLayer) {
+        const completedPoints = [
+            [start.lat, start.lng],
+            [lat, lng]
+        ];
+        const remainingPoints = [
+            [lat, lng],
+            [end.lat, end.lng]
+        ];
+        
+        // Remove old route and add new segmented route
+        map.removeLayer(routeLayer);
+        
+        const completedRoute = L.polyline(completedPoints, { color: '#2ED573', weight: 5, opacity: 0.8 });
+        const remainingRoute = L.polyline(remainingPoints, { color: '#FFA502', weight: 4, opacity: 0.5, dashArray: '5, 10' });
+        
+        completedRoute.addTo(map);
+        remainingRoute.addTo(map);
+        routeLayer = [completedRoute, remainingRoute];
+    }
 }
 
 // Function to select and track an order
@@ -150,18 +336,23 @@ function selectOrderToTrack(orderId) {
     
     currentTrackingOrder = order;
     
-    // Start tracking
-    startOrderTracking(order);
-}
-
-// Function to start tracking an order
-function startOrderTracking(order) {
+    // Stop existing tracking
     if (trackingInterval) {
         clearInterval(trackingInterval);
     }
     
-    // Initialize map if not already done
-    initTrackingMap(order);
+    // Initialize real map
+    if (typeof L !== 'undefined') {
+        initRealMap(order);
+    } else {
+        // Wait for Leaflet to load
+        const checkLeaflet = setInterval(() => {
+            if (typeof L !== 'undefined') {
+                clearInterval(checkLeaflet);
+                initRealMap(order);
+            }
+        }, 100);
+    }
     
     // Update order details
     updateTrackingDetails(order);
@@ -169,216 +360,34 @@ function startOrderTracking(order) {
     // Update progress steps
     updateOrderProgress(order.status);
     
-    // Start simulated location updates (in real app, this would be WebSocket)
-    startSimulatedTracking(order);
-}
-
-// Initialize tracking map
-function initTrackingMap(order) {
-    const mapContainer = document.getElementById('trackingMap');
-    
-    // For demo, we'll use a simulated map with coordinates
-    // In production, you would use Leaflet or Google Maps API
-    
-    // Restaurant coordinates (simulated)
-    const restaurantCoords = { lat: 28.6139, lng: 77.2090 };
-    // Delivery location (simulated based on order address)
-    const deliveryCoords = { lat: 28.6200, lng: 77.2150 };
-    
-    mapContainer.innerHTML = `
-        <div id="actualMap" style="height: 100%; width: 100%; border-radius: 12px; position: relative; background: linear-gradient(135deg, #1a1a2e, #16213e);">
-            <div style="position: relative; height: 100%; width: 100%;">
-                <!-- Simulated Map -->
-                <svg style="width: 100%; height: 100%; border-radius: 12px;" viewBox="0 0 800 400">
-                    <!-- Background -->
-                    <rect width="800" height="400" fill="#1a1a2e" rx="12"/>
-                    
-                    <!-- Roads -->
-                    <path d="M 0 200 L 800 200" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
-                    <path d="M 400 0 L 400 400" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
-                    
-                    <!-- Restaurant Marker -->
-                    <g id="restaurant-marker">
-                        <circle cx="150" cy="200" r="15" fill="#FF4757"/>
-                        <circle cx="150" cy="200" r="20" fill="none" stroke="#FF4757" stroke-width="2" opacity="0.5"/>
-                        <text x="150" y="205" text-anchor="middle" fill="white" font-size="12">🍽️</text>
-                        <text x="150" y="175" text-anchor="middle" fill="white" font-size="10">Restaurant</text>
-                    </g>
-                    
-                    <!-- Delivery Marker -->
-                    <g id="delivery-marker">
-                        <circle cx="150" cy="200" r="12" fill="#FFA502"/>
-                        <text x="150" y="205" text-anchor="middle" fill="white" font-size="10">🚚</text>
-                    </g>
-                    
-                    <!-- User Marker -->
-                    <g id="user-marker">
-                        <circle cx="650" cy="200" r="15" fill="#2ED573"/>
-                        <circle cx="650" cy="200" r="20" fill="none" stroke="#2ED573" stroke-width="2" opacity="0.5"/>
-                        <text x="650" y="205" text-anchor="middle" fill="white" font-size="12">🏠</text>
-                        <text x="650" y="175" text-anchor="middle" fill="white" font-size="10">You</text>
-                    </g>
-                    
-                    <!-- Route Path -->
-                    <path id="route-path" d="M 150 200 C 300 200, 500 200, 650 200" fill="none" stroke="#FFA502" stroke-width="3" stroke-dasharray="10,5" opacity="0.7"/>
-                    
-                    <!-- Distance Label -->
-                    <text x="400" y="190" text-anchor="middle" fill="rgba(255,255,255,0.6)" font-size="11">3.2 km • Estimated 15 min</text>
-                </svg>
-            </div>
-        </div>
-    `;
-}
-
-// Update tracking details
-function updateTrackingDetails(order) {
-    const detailsContainer = document.getElementById('trackingDetails');
-    const subtotal = order.subtotal || order.total - 40;
-    
-    let estimatedTime = '25-35 minutes';
-    let deliveryPartner = 'Rajesh (Partner ID: DLV456)';
-    let vehicleNumber = 'KA-01-AB-1234';
-    
-    if (order.status === 'preparing') {
-        estimatedTime = '15-20 minutes';
-    } else if (order.status === 'out_for_delivery') {
-        estimatedTime = '5-10 minutes';
-    } else if (order.status === 'delivered') {
-        estimatedTime = 'Delivered';
-    }
-    
-    detailsContainer.innerHTML = `
-        <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
-                <div>
-                    <h4>Order #${order.id.slice(-8)}</h4>
-                    <p style="color: var(--gray); font-size: 0.85rem;">Placed on ${new Date(order.date).toLocaleString()}</p>
-                </div>
-                <div class="order-status-badge" style="background: ${getStatusColor(order.status)}; padding: 0.3rem 0.8rem; border-radius: 20px;">
-                    ${getStatusIcon(order.status)} ${order.status.toUpperCase()}
-                </div>
-            </div>
-            
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
-                <div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                        <i class="fas fa-store" style="color: var(--primary);"></i>
-                        <strong>Restaurant</strong>
-                    </div>
-                    <p style="font-size: 0.85rem;">${order.items?.[0]?.restaurant || order.restaurantName || 'Restaurant'}</p>
-                    <p style="font-size: 0.75rem; color: var(--gray);">Connaught Place, New Delhi</p>
-                </div>
-                
-                <div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                        <i class="fas fa-home" style="color: var(--success);"></i>
-                        <strong>Delivery Address</strong>
-                    </div>
-                    <p style="font-size: 0.85rem;">${order.address || 'Your saved address'}</p>
-                </div>
-                
-                <div>
-                    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
-                        <i class="fas fa-motorcycle" style="color: var(--warning);"></i>
-                        <strong>Delivery Partner</strong>
-                    </div>
-                    <p style="font-size: 0.85rem;">${deliveryPartner}</p>
-                    <p style="font-size: 0.75rem; color: var(--gray);">Vehicle: ${vehicleNumber}</p>
-                </div>
-            </div>
-            
-            <div style="border-top: 1px solid var(--border); padding-top: 1rem;">
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span>Items:</span>
-                    <span>${order.items?.length || 0} items</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span>Subtotal:</span>
-                    <span>${formatPrice(subtotal)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span>Delivery Fee:</span>
-                    <span>${formatPrice(40)}</span>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px solid var(--border);">
-                    <span>Total Paid:</span>
-                    <span style="color: var(--primary);">${formatPrice(order.total)}</span>
-                </div>
-            </div>
-            
-            <div style="margin-top: 1rem; background: rgba(46,213,115,0.1); border-radius: 8px; padding: 0.5rem; text-align: center;">
-                <i class="fas fa-clock"></i>
-                <span style="margin-left: 0.5rem;">Estimated Delivery: ${estimatedTime}</span>
-            </div>
-            
-            ${order.status !== 'delivered' && order.status !== 'cancelled' ? `
-                <button class="btn-primary" style="width: 100%; margin-top: 1rem; background: var(--danger);" onclick="cancelOrder('${order.id}')">
-                    <i class="fas fa-times"></i> Cancel Order
-                </button>
-            ` : ''}
-        </div>
-    `;
-}
-
-// Update order progress steps
-function updateOrderProgress(status) {
-    const progressContainer = document.getElementById('orderProgress');
-    progressContainer.style.display = 'block';
-    
-    const steps = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered'];
-    const currentStepIndex = steps.indexOf(status?.toLowerCase());
-    
-    for (let i = 0; i <= 3; i++) {
-        const stepElement = document.getElementById(`step-${i}`);
-        if (stepElement) {
-            const stepDiv = stepElement.querySelector('div:first-child');
-            if (i <= currentStepIndex) {
-                stepDiv.style.background = 'var(--primary)';
-                stepDiv.style.boxShadow = '0 0 10px var(--primary)';
-            } else {
-                stepDiv.style.background = 'rgba(255,255,255,0.1)';
-                stepDiv.style.boxShadow = 'none';
-            }
-        }
+    // Start simulated location updates (in real app, use WebSocket)
+    if (order.status !== 'delivered' && order.status !== 'cancelled') {
+        startRealTimeTracking(order);
     }
 }
 
-// Simulated real-time tracking (in production, use WebSocket)
-function startSimulatedTracking(order) {
-    if (order.status === 'delivered' || order.status === 'cancelled') {
-        return;
-    }
-    
+// Start real-time tracking simulation
+function startRealTimeTracking(order) {
     let progress = 0;
     const totalDuration = 60000; // 60 seconds for demo
-    const intervalTime = 2000; // Update every 2 seconds
+    const intervalTime = 1000; // Update every second
+    
+    // Set initial progress based on status
+    if (order.status === 'preparing') progress = 25;
+    else if (order.status === 'out_for_delivery') progress = 60;
+    else progress = 5;
     
     trackingInterval = setInterval(() => {
         progress += (intervalTime / totalDuration) * 100;
         
-        // Update delivery marker position
-        const deliveryMarker = document.querySelector('#delivery-marker circle:first-child');
-        if (deliveryMarker) {
-            const startX = 150;
-            const endX = 650;
-            const currentX = startX + (progress / 100) * (endX - startX);
-            deliveryMarker.setAttribute('cx', Math.min(currentX, endX));
-            
-            const deliveryIcon = document.querySelector('#delivery-marker text');
-            if (deliveryIcon) {
-                deliveryIcon.setAttribute('x', Math.min(currentX, endX));
-            }
-        }
-        
-        // Update status based on progress
-        if (progress >= 100 && order.status !== 'delivered') {
+        if (progress >= 100) {
             // Order delivered
             order.status = 'delivered';
             updateOrderProgress('delivered');
             updateTrackingDetails(order);
             clearInterval(trackingInterval);
             
-            // Update the order in the list
+            // Update UI
             const orderItem = document.getElementById(`order-item-${order.id}`);
             if (orderItem) {
                 const statusSpan = orderItem.querySelector('.order-status-badge');
@@ -389,16 +398,40 @@ function startSimulatedTracking(order) {
             }
             
             showNotification('🎉 Your order has been delivered! Enjoy your meal!');
-        } else if (progress > 30 && order.status === 'confirmed') {
-            order.status = 'preparing';
-            updateOrderProgress('preparing');
-            updateTrackingDetails(order);
-        } else if (progress > 60 && order.status === 'preparing') {
-            order.status = 'out_for_delivery';
-            updateOrderProgress('out_for_delivery');
-            updateTrackingDetails(order);
+        } else {
+            // Update delivery marker position
+            updateDeliveryPosition(progress);
+            
+            // Update status based on progress
+            if (progress > 70 && order.status !== 'out_for_delivery') {
+                order.status = 'out_for_delivery';
+                updateOrderProgress('out_for_delivery');
+                updateTrackingDetails(order);
+                
+                // Update order item status
+                const orderItem = document.getElementById(`order-item-${order.id}`);
+                if (orderItem) {
+                    const statusSpan = orderItem.querySelector('.order-status-badge');
+                    if (statusSpan) {
+                        statusSpan.style.background = getStatusColor('out_for_delivery');
+                        statusSpan.innerHTML = `${getStatusIcon('out_for_delivery')} out_for_delivery`;
+                    }
+                }
+            } else if (progress > 30 && order.status !== 'preparing' && order.status !== 'out_for_delivery') {
+                order.status = 'preparing';
+                updateOrderProgress('preparing');
+                updateTrackingDetails(order);
+            }
         }
     }, intervalTime);
+}
+
+// Stop tracking
+function stopTracking() {
+    if (trackingInterval) {
+        clearInterval(trackingInterval);
+        trackingInterval = null;
+    }
 }
 
 // Function to cancel an order
@@ -419,17 +452,8 @@ function cancelOrder(orderId) {
                 }
             }
             
-            // Refresh the order list
             renderOrderTrackingPage();
         }
-    }
-}
-
-// Function to stop tracking (cleanup)
-function stopTracking() {
-    if (trackingInterval) {
-        clearInterval(trackingInterval);
-        trackingInterval = null;
     }
 }
 
@@ -437,3 +461,4 @@ function stopTracking() {
 window.selectOrderToTrack = selectOrderToTrack;
 window.cancelOrder = cancelOrder;
 window.stopTracking = stopTracking;
+window.initRealMap = initRealMap;

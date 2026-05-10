@@ -604,3 +604,47 @@ body {
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
+/* Delivery Marker Pulse Animation */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.custom-div-icon {
+    background: transparent;
+}
+
+/* Map Container Styling */
+#trackingMap {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.leaflet-container {
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+}
+
+.leaflet-popup-content {
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Location coordinates */
+.leaflet-control-attribution {
+    font-size: 8px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+}
