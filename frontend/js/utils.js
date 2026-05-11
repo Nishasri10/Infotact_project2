@@ -188,17 +188,94 @@ function handleAuth() {
     }
 }
 
+// Add these functions to your existing utils.js
+
+// Update profile function
 function updateProfile() {
-    currentUser.name = document.getElementById('profileName').value;
-    currentUser.email = document.getElementById('profileEmail').value;
-    currentUser.phone = document.getElementById('profilePhone').value;
-    currentUser.address = document.getElementById('profileAddress').value;
+    const nameField = document.getElementById('profileName');
+    const emailField = document.getElementById('profileEmail');
+    const phoneField = document.getElementById('profilePhone');
+    const addressField = document.getElementById('profileAddress');
+    
+    if (nameField) currentUser.name = nameField.value;
+    if (emailField) currentUser.email = emailField.value;
+    if (phoneField) currentUser.phone = phoneField.value;
+    if (addressField) currentUser.address = addressField.value;
+    
     saveData();
-    showNotification('Profile updated!');
-    if (typeof renderProfilePage === 'function') renderProfilePage();
-    if (typeof renderNavbar === 'function') renderNavbar();
+    showNotification('Profile updated successfully!');
+    
+    // Re-render profile page if currently on it
+    if (currentPage === 'profile' && typeof renderProfilePage === 'function') {
+        renderProfilePage();
+    }
+    
+    // Update navbar
+    if (typeof renderNavbar === 'function') {
+        renderNavbar();
+    }
 }
 
+// Logout user function
+function logoutUser() {
+    if (confirm('Are you sure you want to logout?')) {
+        const defaultUser = { 
+            name: 'Food Lover', 
+            email: 'foodie@example.com', 
+            points: 250, 
+            phone: '', 
+            address: '' 
+        };
+        currentUser = defaultUser;
+        localStorage.setItem('promax_user', JSON.stringify(defaultUser));
+        showNotification('Logged out successfully!');
+        
+        if (typeof navigateTo === 'function') {
+            navigateTo('home');
+        }
+        if (typeof renderNavbar === 'function') {
+            renderNavbar();
+        }
+    }
+}
+
+// Clear all user data
+function clearAllUserData() {
+    if (confirm('⚠️ WARNING: This will delete all your data including cart, orders, reservations, and bookings. This action cannot be undone. Are you sure?')) {
+        localStorage.removeItem('promax_cart');
+        localStorage.removeItem('promax_favorites');
+        localStorage.removeItem('promax_orders');
+        localStorage.removeItem('promax_reservations');
+        localStorage.removeItem('promax_booked_events');
+        localStorage.removeItem('promax_user');
+        localStorage.removeItem('event_reminders');
+        
+        // Reset global variables
+        cartItems = [];
+        favorites = [];
+        orders = [];
+        reservations = [];
+        bookedEvents = [];
+        currentUser = { name: 'Food Lover', email: 'foodie@example.com', points: 250, phone: '', address: '' };
+        
+        // Save default user
+        localStorage.setItem('promax_user', JSON.stringify(currentUser));
+        
+        showNotification('All data cleared successfully!');
+        
+        if (typeof navigateTo === 'function') {
+            navigateTo('home');
+        }
+        if (typeof renderNavbar === 'function') {
+            renderNavbar();
+        }
+    }
+}
+
+// Make functions globally available
+window.updateProfile = updateProfile;
+window.logoutUser = logoutUser;
+window.clearAllUserData = clearAllUserData;
 function openEventBookingModal(event) {
     selectedEvent = event;
     eventTicketCount = 1;
