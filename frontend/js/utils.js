@@ -332,6 +332,203 @@ function cancelEventBooking(bookingId) {
         }
     }
 }
+// ============ ADD THESE FUNCTIONS ============
+
+// Enhanced Toast Notification
+function showToast(message, type = 'success', duration = 3000) {
+    let toastContainer = document.querySelector('.toast-container');
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    const icons = {
+        success: 'fa-check-circle',
+        error: 'fa-exclamation-circle',
+        warning: 'fa-exclamation-triangle',
+        info: 'fa-info-circle'
+    };
+    
+    toast.innerHTML = `
+        <i class="fas ${icons[type] || icons.success}"></i>
+        <span>${message}</span>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+// Theme Toggle Function
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const isLightMode = document.body.classList.contains('light-mode');
+    localStorage.setItem('theme', isLightMode ? 'light' : 'dark');
+    
+    const themeIcon = document.querySelector('.theme-toggle i');
+    if (themeIcon) {
+        themeIcon.className = isLightMode ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    
+    showToast(`${isLightMode ? 'Light' : 'Dark'} mode activated`, 'info', 1500);
+}
+
+// Load Theme Preference
+function loadTheme() {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'light') {
+        document.body.classList.add('light-mode');
+    }
+    const themeIcon = document.querySelector('.theme-toggle i');
+    if (themeIcon) {
+        themeIcon.className = savedTheme === 'light' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+}
+
+// Scroll Progress Bar
+function initScrollProgress() {
+    const progressBar = document.createElement('div');
+    progressBar.className = 'scroll-progress';
+    document.body.appendChild(progressBar);
+    
+    window.addEventListener('scroll', () => {
+        const winScroll = document.documentElement.scrollTop;
+        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+        const scrolled = (winScroll / height) * 100;
+        progressBar.style.width = scrolled + '%';
+    });
+}
+
+// Breadcrumb Navigation
+function updateBreadcrumb(pageName) {
+    let breadcrumb = document.querySelector('.breadcrumb');
+    if (!breadcrumb) {
+        breadcrumb = document.createElement('div');
+        breadcrumb.className = 'breadcrumb';
+        const mainContent = document.querySelector('.main-content');
+        if (mainContent) {
+            mainContent.insertBefore(breadcrumb, mainContent.firstChild);
+        }
+    }
+    
+    breadcrumb.innerHTML = `
+        <span class="breadcrumb-item" onclick="navigateTo('home')">Home</span>
+        <span class="breadcrumb-separator"><i class="fas fa-chevron-right"></i></span>
+        <span class="breadcrumb-item active">${pageName}</span>
+    `;
+}
+
+// Floating Action Button for Cart
+function createFAB() {
+    if (document.querySelector('.fab')) return;
+    
+    const fab = document.createElement('button');
+    fab.className = 'fab';
+    fab.innerHTML = `
+        <i class="fas fa-shopping-cart"></i>
+        <span class="cart-count">${getCartCount()}</span>
+    `;
+    fab.onclick = () => navigateTo('cart');
+    document.body.appendChild(fab);
+    
+    // Update FAB count when cart changes
+    const originalUpdateCartUI = window.updateCartUI;
+    window.updateCartUI = function() {
+        if (originalUpdateCartUI) originalUpdateCartUI();
+        const fabCount = document.querySelector('.fab .cart-count');
+        if (fabCount) fabCount.textContent = getCartCount();
+    };
+}
+
+// Skeleton Loader
+function showSkeleton(containerId, type = 'food') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    let skeletonHtml = '';
+    if (type === 'food') {
+        skeletonHtml = `
+            <div class="skeleton skeleton-image" style="height: 200px; border-radius: 12px;"></div>
+            <div style="padding: 1rem;">
+                <div class="skeleton skeleton-title"></div>
+                <div class="skeleton skeleton-text" style="width: 80%;"></div>
+                <div class="skeleton skeleton-text" style="width: 60%;"></div>
+            </div>
+        `;
+    } else if (type === 'grid') {
+        skeletonHtml = Array(6).fill(`
+            <div class="food-card">
+                <div class="skeleton skeleton-image" style="height: 200px;"></div>
+                <div style="padding: 1rem;">
+                    <div class="skeleton skeleton-title"></div>
+                    <div class="skeleton skeleton-text" style="width: 80%;"></div>
+                    <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+    
+    container.innerHTML = skeletonHtml;
+}
+
+// Confetti Effect
+function showConfetti() {
+    const colors = ['#FF4757', '#FFA502', '#2ED573', '#1E90FF', '#FFD700'];
+    for (let i = 0; i < 100; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.position = 'fixed';
+        confetti.style.left = Math.random() * 100 + '%';
+        confetti.style.top = '-10px';
+        confetti.style.width = '10px';
+        confetti.style.height = '10px';
+        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        confetti.style.borderRadius = '50%';
+        confetti.style.pointerEvents = 'none';
+        confetti.style.zIndex = '10000';
+        confetti.style.animation = `confetti ${2 + Math.random() * 2}s linear forwards`;
+        document.body.appendChild(confetti);
+        setTimeout(() => confetti.remove(), 3000);
+    }
+}
+
+// Initialize all UI enhancements
+function initUIEnhancements() {
+    initScrollProgress();
+    createFAB();
+    loadTheme();
+    
+    // Add theme toggle button if not exists
+    if (!document.querySelector('.theme-toggle')) {
+        const themeToggle = document.createElement('button');
+        themeToggle.className = 'theme-toggle';
+        themeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+        themeToggle.onclick = toggleTheme;
+        document.body.appendChild(themeToggle);
+    }
+}
+
+// Override showNotification to use toast
+const originalShowNotification = window.showNotification;
+window.showNotification = function(message, type = 'success') {
+    showToast(message, type);
+};
+
+// Add confetti on order success
+const originalProcessCheckout = window.processCheckout;
+window.processCheckout = function() {
+    if (originalProcessCheckout) originalProcessCheckout();
+    showConfetti();
+};
+
+// Call this when app initializes
+window.initUIEnhancements = initUIEnhancements;
 
 window.addToCart = addToCart;
 window.removeFromCart = removeFromCart;
