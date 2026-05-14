@@ -526,6 +526,283 @@ window.processCheckout = function() {
     if (originalProcessCheckout) originalProcessCheckout();
     showConfetti();
 };
+// Add these functions to your utils.js
+
+// ============ LOADING INDICATORS ============
+function showLoading(containerId, type = 'spinner') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    if (type === 'spinner') {
+        container.innerHTML = `
+            <div style="display: flex; justify-content: center; align-items: center; padding: 3rem;">
+                <div class="loading-spinner"></div>
+                <span style="margin-left: 1rem; color: var(--text-muted);">Loading...</span>
+            </div>
+        `;
+    } else if (type === 'skeleton') {
+        container.innerHTML = `
+            <div class="skeleton-grid">
+                ${Array(6).fill(`
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-image"></div>
+                        <div class="skeleton skeleton-text"></div>
+                        <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+}
+
+function hideLoading(containerId) {
+    const container = document.getElementById(containerId);
+    if (container) {
+        // Clear loading content
+    }
+}
+
+// ============ ERROR HANDLING ============
+function showError(containerId, errorMessage, retryCallback = null) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    
+    container.innerHTML = `
+        <div class="error-container" style="text-align: center; padding: 3rem;">
+            <i class="fas fa-exclamation-triangle" style="font-size: 3rem; color: var(--error); margin-bottom: 1rem;"></i>
+            <h3>Oops! Something went wrong</h3>
+            <p style="color: var(--text-muted); margin: 0.5rem 0;">${errorMessage}</p>
+            ${retryCallback ? `<button class="btn-primary" onclick="(${retryCallback})()" style="margin-top: 1rem;">Try Again</button>` : ''}
+        </div>
+    `;
+}
+
+// ============ FORM VALIDATION ============
+function validateEmail(email) {
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function validatePhone(phone) {
+    const re = /^[0-9]{10}$/;
+    return re.test(phone);
+}
+
+function validateName(name) {
+    return name && name.trim().length >= 2;
+}
+
+function showFieldError(fieldId, message) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.classList.add('error');
+        field.style.borderColor = 'var(--error)';
+        
+        let errorDiv = field.parentElement.querySelector('.field-error');
+        if (!errorDiv) {
+            errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error';
+            field.parentElement.appendChild(errorDiv);
+        }
+        errorDiv.textContent = message;
+        errorDiv.style.color = 'var(--error)';
+        errorDiv.style.fontSize = '0.7rem';
+        errorDiv.style.marginTop = '0.25rem';
+    }
+}
+
+function clearFieldError(fieldId) {
+    const field = document.getElementById(fieldId);
+    if (field) {
+        field.classList.remove('error');
+        field.style.borderColor = 'var(--border)';
+        
+        const errorDiv = field.parentElement.querySelector('.field-error');
+        if (errorDiv) errorDiv.remove();
+    }
+}
+
+// ============ DEBOUNCE FUNCTION (for search) ============
+function debounce(func, delay) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, delay);
+    };
+}
+
+// ============ INFINITE SCROLL ============
+function setupInfiniteScroll(loadMoreCallback) {
+    const observer = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting) {
+            loadMoreCallback();
+        }
+    }, { threshold: 0.1 });
+    
+    const sentinel = document.createElement('div');
+    sentinel.id = 'scroll-sentinel';
+    sentinel.style.height = '10px';
+    document.body.appendChild(sentinel);
+    observer.observe(sentinel);
+    
+    return observer;
+}
+
+// ============ PUSH NOTIFICATIONS ============
+async function requestNotificationPermission() {
+    if ('Notification' in window) {
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            console.log('Notification permission granted');
+            return true;
+        }
+    }
+    return false;
+}
+
+function sendNotification(title, body, icon = null) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, { body, icon });
+    }
+}
+
+// ============ OFFLINE DETECTION ============
+function initOfflineDetection() {
+    window.addEventListener('online', () => {
+        showToast('You are back online!', 'success');
+        location.reload();
+    });
+    
+    window.addEventListener('offline', () => {
+        showToast('You are offline. Some features may be limited.', 'warning');
+    });
+}
+
+// ============ IMAGE LAZY LOADING ============
+function initLazyLoading() {
+    const images = document.querySelectorAll('img[data-src]');
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.removeAttribute('data-src');
+                observer.unobserve(img);
+            }
+        });
+    });
+    
+    images.forEach(img => imageObserver.observe(img));
+}
+
+// ============ SCROLL TO TOP BUTTON ============
+function createScrollToTopButton() {
+    const button = document.createElement('button');
+    button.className = 'scroll-top-btn';
+    button.innerHTML = '<i class="fas fa-arrow-up"></i>';
+    button.style.cssText = `
+        position: fixed;
+        bottom: 80px;
+        right: 20px;
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: none;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    `;
+    
+    button.onclick = () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+    
+    document.body.appendChild(button);
+    
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            button.style.display = 'flex';
+            button.style.alignItems = 'center';
+            button.style.justifyContent = 'center';
+        } else {
+            button.style.display = 'none';
+        }
+    });
+}
+
+// ============ COOKIE CONSENT ============
+function showCookieConsent() {
+    if (localStorage.getItem('cookieConsent')) return;
+    
+    const consent = document.createElement('div');
+    consent.className = 'cookie-consent';
+    consent.style.cssText = `
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: var(--dark-bg);
+        padding: 1rem;
+        text-align: center;
+        border-top: 1px solid var(--border);
+        z-index: 1000;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    `;
+    consent.innerHTML = `
+        <p style="margin: 0; font-size: 0.85rem;">We use cookies to enhance your experience. By continuing, you agree to our cookie policy.</p>
+        <div>
+            <button class="btn-primary" onclick="acceptCookies()" style="padding: 0.3rem 1rem;">Accept</button>
+            <button class="btn-view" onclick="rejectCookies()" style="padding: 0.3rem 1rem;">Decline</button>
+        </div>
+    `;
+    document.body.appendChild(consent);
+}
+
+function acceptCookies() {
+    localStorage.setItem('cookieConsent', 'accepted');
+    document.querySelector('.cookie-consent')?.remove();
+    showToast('Cookies accepted!', 'success');
+}
+
+function rejectCookies() {
+    localStorage.setItem('cookieConsent', 'rejected');
+    document.querySelector('.cookie-consent')?.remove();
+}
+
+// ============ EXPORT FUNCTION ============
+function initFrontendEnhancements() {
+    initOfflineDetection();
+    createScrollToTopButton();
+    requestNotificationPermission();
+    
+    // Show cookie consent after 2 seconds
+    setTimeout(showCookieConsent, 2000);
+}
+
+// Make functions global
+window.showLoading = showLoading;
+window.showError = showError;
+window.validateEmail = validateEmail;
+window.validatePhone = validatePhone;
+window.validateName = validateName;
+window.showFieldError = showFieldError;
+window.clearFieldError = clearFieldError;
+window.debounce = debounce;
+window.sendNotification = sendNotification;
+window.initFrontendEnhancements = initFrontendEnhancements;
+window.acceptCookies = acceptCookies;
+window.rejectCookies = rejectCookies;
 
 // Call this when app initializes
 window.initUIEnhancements = initUIEnhancements;

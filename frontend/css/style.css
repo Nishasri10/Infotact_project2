@@ -1000,3 +1000,147 @@ body.light-mode {
         opacity: 0;
     }
 }
+/* Loading Spinner */
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Skeleton Loading */
+.skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.skeleton-card {
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.skeleton {
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+.skeleton-image {
+    height: 180px;
+    width: 100%;
+}
+
+.skeleton-text {
+    height: 16px;
+    margin: 12px;
+    border-radius: 4px;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Form Error States */
+.form-input.error {
+    border-color: var(--error) !important;
+    box-shadow: 0 0 0 2px rgba(244, 67, 54, 0.1);
+}
+
+.field-error {
+    font-size: 0.7rem;
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.field-error::before {
+    content: '⚠️';
+    font-size: 0.6rem;
+}
+
+/* Cookie Consent */
+.cookie-consent {
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+}
+
+/* Scroll to Top Button Animation */
+.scroll-top-btn {
+    transition: all 0.3s;
+}
+
+.scroll-top-btn:hover {
+    transform: translateY(-3px);
+    background: var(--secondary);
+}
+
+/* Online/Offline Status */
+.online-status {
+    position: fixed;
+    top: 70px;
+    right: 20px;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    z-index: 1000;
+}
+
+.online-status.online {
+    background: var(--success);
+    color: white;
+}
+
+.online-status.offline {
+    background: var(--error);
+    color: white;
+}
+
+/* Improved Mobile Experience */
+@media (max-width: 768px) {
+    .scroll-top-btn {
+        bottom: 70px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .cookie-consent {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .skeleton-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Toast Animation Improvement */
+.toast {
+    animation: slideInRight 0.3s ease;
+    max-width: 90%;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}

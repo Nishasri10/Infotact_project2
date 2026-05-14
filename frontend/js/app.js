@@ -229,7 +229,18 @@ function renderApp() {
     updateCartUI();
     navigateTo('home'); // Start on home page
 }
-
+// Add this to your init() function
+function init() {
+    loadUser();
+    setupGlobalFunctions();
+    render();
+    
+    // Initialize frontend enhancements
+    initFrontendEnhancements();
+    
+    // WebSocket connection
+    WebSocketService.connect();
+}
 // Make functions global
 window.navigateTo = navigateTo;
 window.toggleCart = toggleCart;
